@@ -1,0 +1,19 @@
+[workspace]
+members = [
+    "bin/artemis",
+    "bin/cli",
+    "crates/artemis-core",
+    "crates/generator",
+    "crates/strategies/*",
+    "crates/clients/*", 
+    "examples/*",
+]
+
+default-members = ["bin/artemis", "bin/cli"]
+
+[profile.release]
+panic = 'abort'
+
+[profile.dev]
+panic = 'abort'
+
