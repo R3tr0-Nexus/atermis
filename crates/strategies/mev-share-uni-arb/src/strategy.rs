@@ -146,7 +146,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                         self.arb_contract
                             .execute_arbitrage(
                                 v2_info.v2_pool,
-                                v2_info.v2_pool,
+                                v3_address,
                                 payment_percentage,
                             )
                             .tx
@@ -155,7 +155,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                         self.arb_contract
                             .execute_arbitrage(
                                 v2_info.v2_pool,
-                                v2_info.v2_pool,
+                                v3_address,
                                 payment_percentage,
                             )
                             .tx
@@ -188,7 +188,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                     can_revert: false,
                 },
             ];
-            
+
             // bundle should be valid for next block
             let bundle = BundleRequest::make_simple(block_num.add(1), txs);
             info!("submitting bundle: {:?}", bundle);
