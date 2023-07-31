@@ -79,11 +79,8 @@ async fn main() -> Result<()> {
     );
     engine.add_strategy(Box::new(strategy));
 
-    let relay_name = "flash_bot";
-    let url =  "https://relay.flashbots.net/";
-
     // Set up executor.
-    let mev_share_executor = Box::new(MevshareExecutor::new(fb_signer, Chain::Mainnet, url, relay_name));
+    let mev_share_executor = Box::new(MevshareExecutor::new(fb_signer, Chain::Mainnet));
     let mev_share_executor = ExecutorMap::new(mev_share_executor, |action| match action {
         Action::SubmitBundles(bundles) => Some(bundles),
     });

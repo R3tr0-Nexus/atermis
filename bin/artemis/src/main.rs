@@ -63,17 +63,15 @@ async fn main() -> Result<()> {
     let fb_signer: LocalWallet = args.flashbots_signer.parse().unwrap();
 
     // Set up engine.
-    let mut engine: Arc<Engine<Event, Action>> = Arc::new(Engine::default());
+    let mut engine: Engine<Event, Action> = Engine::default();
 
     // Set up collector.
     let mevshare_collector = Box::new(MevShareCollector::new(String::from(
         "https://mev-share.flashbots.net",
     )));
     let mevshare_collector = CollectorMap::new(mevshare_collector, Event::MEVShareEvent);
-    let mut engine_ref = Arc::get_mut(&mut engine).unwrap();
-    engine_ref.add_collector(Box::new(mevshare_collector));
-    drop(engine_ref);
-
+    engine.add_collector(Box::new(mevshare_collector));
+    
 
     // Set up strategy.
     let strategy = MevShareUniArb::new(
@@ -81,42 +79,16 @@ async fn main() -> Result<()> {
         wallet.clone(),
         args.arb_contract_address,
     );
-    let mut engine_ref = Arc::get_mut(&mut engine).unwrap();
-    engine_ref.add_strategy(Box::new(strategy));
-    drop(engine_ref);
+    engine.add_strategy(Box::new(strategy));
+    
 
-    //Set up concurrent executors
-    let mev_share_executors = mev_share_executor::get_all_mev_share_endpoints(fb_signer, Chain::Mainnet).await;
-
-    for relay in mev_share_executors.into_iter()
-    {   
-        let engine = engine.clone();
-
-        tokio::spawn(async move {
-
-            let mut engine_clone = engine.clone();
-
-            let mev_share_executor = Arc::into_inner(relay).unwrap();
-
-            let mev_share_executor = ExecutorMap::new(mev_share_executor, |action| match action
-            {
-                Action::SubmitBundles(bundles) => Some(bundles),
-            });
-            let engine_ref = Arc::get_mut(&mut engine_clone).unwrap();
-            engine_ref.add_executor(Box::new(mev_share_executor));
-            drop(engine_ref);
-        });
-    }
-
-
-    // Set up executor
-    /*let mev_share_executor = Box::new(MevshareExecutor::new(fb_signer, Chain::Mainnet));
+        // Set up executor
+    let mev_share_executor = Box::new(MevshareExecutor::new(fb_signer, Chain::Mainnet));
     let mev_share_executor = ExecutorMap::new(mev_share_executor, |action| match action {
         Action::SubmitBundles(bundles) => Some(bundles),
-    });*/
+    });
     
-    let engine = Arc::into_inner(engine).unwrap();
-
+    
     // Start engine.
     if let Ok(mut set) = engine.run().await {
         while let Some(res) = set.join_next().await {

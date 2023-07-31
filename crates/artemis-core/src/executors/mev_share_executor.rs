@@ -17,9 +17,9 @@ pub struct MevshareExecutor<S> {
 pub type Bundles = Vec<BundleRequest>;
 
 impl<S: Signer + Clone + 'static> MevshareExecutor<S> {
-    pub fn new(signer: S, chain: Chain, url: &str, relay_name: &str) -> Self {
+    pub fn new(signer: S, chain: Chain) -> Self {
         Self {
-            matchmaker_client: Client::new(signer, chain, url, relay_name),
+            matchmaker_client: Client::new(signer, chain),
         }
     }
 }
@@ -48,27 +48,3 @@ impl<S: Signer + Clone + 'static> Executor<Bundles> for MevshareExecutor<S> {
 }
 
 
-pub async fn get_all_mev_share_endpoints<S: Signer + Clone + 'static>(tx_signer: S, chain: Chain) -> Vec<Arc<Box<MevshareExecutor<S>>>> {
-    
-    let endpoints = vec![
-        ("flashbots", "https://relay.flashbots.net/"),
-        ("builder0x69", "http://builder0x69.io/"),
-        ("edennetwork", "https://api.edennetwork.io/v1/bundle"),
-        ("beaverbuild", "https://rpc.beaverbuild.org/"),
-        ("lightspeedbuilder", "https://rpc.lightspeedbuilder.info/"),
-        ("eth-builder", "https://eth-builder.com/"),
-        ("ultrasound", "https://relay.ultrasound.money/"),
-        ("agnostic-relay", "https://agnostic-relay.net/"),
-        ("relayoor-wtf", "https://relayooor.wtf/"),
-        ("rsync-builder", "https://rsync-builder.xyz/"),
-    ];
-
-    let mut relays: Vec<Arc<Box<MevshareExecutor<S>>>> = vec![];
-
-    for (name, endpoint) in endpoints {
-        let relay = Arc::new(Box::new(MevshareExecutor::new(tx_signer.clone(), chain, endpoint, name)));
-        relays.push(relay);
-    }
-
-    relays
-}

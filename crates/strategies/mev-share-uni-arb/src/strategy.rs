@@ -16,6 +16,7 @@ use ethers::types::{Address, H256};
 use ethers::types::{H160, U256};
 use tracing::info;
 
+
 use crate::types::V2V3PoolRecord;
 
 use super::types::{Action, Event};
@@ -188,7 +189,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                     can_revert: false,
                 },
             ];
-            
+
             // bundle should be valid for next block
             let bundle = BundleRequest::make_simple(block_num.add(1), txs);
             info!("submitting bundle: {:?}", bundle);

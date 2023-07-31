@@ -17,23 +17,23 @@ use crate::{
 pub struct Client<S> {
     /// Underlying HTTP client
     pub http_client: HttpClient<FlashbotsSigner<S, HttpBackend>>,
-    //client name
-    pub client_name: String,
+    
+
 }
 
 impl<S: Signer + Clone + 'static> Client<S> {
     /// Create a new client with the given signer and chain
-    pub fn new(signer: S, chain: Chain, url: &str, relay_name: &str) -> Self {
+    pub fn new(signer: S, chain: Chain) -> Self {
         let url = match chain {
-            Chain::Mainnet => url,
+            Chain::Mainnet => "https://relay.flashbots.net:443",
             Chain::Goerli => "https://relay-goerli.flashbots.net:443",
             _ => panic!("Unsupported chain"),
         };
-        Self::from_url(signer, url, relay_name)
+        Self::from_url(signer, url)
     }
 
     /// Create a new client with the given signer and url
-    pub fn from_url(signer: S, url: &str, relay_name: &str) -> Self {
+    pub fn from_url(signer: S, url: &str) -> Self {
         let signing_middleware = FlashbotsSignerLayer::new(Arc::new(signer));
 
         let service_builder = ServiceBuilder::new().layer(signing_middleware);
@@ -43,9 +43,9 @@ impl<S: Signer + Clone + 'static> Client<S> {
             .build(url)
             .unwrap();
 
-        let client_name = String::from(relay_name);
 
-        Self { http_client, client_name }
+
+        Self { http_client }
     }
 
     /// Send a bundle to the matchmaker
