@@ -107,6 +107,7 @@ pub struct RefundConfig {
     pub address: Address,
     /// The minimum percent of the bundle's earnings to redistribute.
     pub percent: u64,
+    
 }
 
 /// Preferences on what data should be shared about the bundle and its transactions
@@ -284,31 +285,36 @@ impl BundleRequest {
            validity: Some(Validity
             {
                 refund: None,
-                refund_config: None,
+                refund_config: Some({ vec![RefundConfig{
+                    
+                    address: Address::from_str("0x40").unwrap(),
+                    percent:90,
+
+                   }]
+            
+                }),
+            
             }),
+            
             privacy: Some(Privacy
             {
                 hints: Some(PrivacyHint
                 {
-                    calldata: true,
-                    contract_address: true,
-                    logs: true,
-                    function_selector: true,
-                    hash: true,
-                    tx_hash: true,
+                    calldata: false,
+                    contract_address: false,
+                    logs: false,
+                    function_selector: false,
+                    hash: false,
+                    tx_hash: false,
                 }), 
 
                 builders: Some(vec![
                     Address::from_str("0x1f9090aaE28b8a3dCeaDf281B0F12828e676c326").unwrap(), //rysnc builder
                     Address::from_str("0x690B9A9E9aa1C9dB991C7721a92d351Db4FaC990").unwrap(), //builder0x69
                     Address::from_str("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5").unwrap(), //beaverbuild
-                    Address::from_str("0x333333f332a06ECB5D20D35da44ba07986D6E203").unwrap(), // Mev builder
                     Address::from_str("0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5").unwrap(), //Flashbot builder
                     Address::from_str("0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97").unwrap(), //Titan builder
-                    Address::from_str("0xFeebabE6b0418eC13b30aAdF129F5DcDd4f70CeA").unwrap(), //eth_builder
-                    Address::from_str("0x388C818CA8B9251b393131C08a736A67ccB19297").unwrap(), //Lido builder
-                    Address::from_str("0x5124fcC2B3F99F571AD67D075643C743F38f1C34").unwrap(), //Mev builder
-                    Address::from_str("0xCE0BaBc8398144Aa98D9210d595E3A9714910748").unwrap(), //payload
+                    
 
                 ]),
 
