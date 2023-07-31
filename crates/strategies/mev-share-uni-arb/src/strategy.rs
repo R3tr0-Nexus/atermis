@@ -147,7 +147,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                         self.arb_contract
                             .execute_arbitrage(
                                 v2_info.v2_pool,
-                                v2_info.v2_pool,
+                                v3_address,
                                 payment_percentage,
                             )
                             .tx
@@ -156,7 +156,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
                         self.arb_contract
                             .execute_arbitrage(
                                 v2_info.v2_pool,
-                                v2_info.v2_pool,
+                                v3_address,
                                 payment_percentage,
                             )
                             .tx
