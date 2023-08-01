@@ -99,10 +99,13 @@ pub enum Events {
     NewBlock(NewBlock),
     Transaction(Transaction),
     OpenseaOrder(Box<OpenseaOrder>),
+
 }
 
 /// Convenience enum containing all the actions that can be executed by executors.
 pub enum Actions {
     FlashbotsBundle(FlashbotsBundle),
     SubmitTxToMempool(SubmitTxToMempool),
+
+
 }

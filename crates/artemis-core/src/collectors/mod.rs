@@ -14,4 +14,9 @@ pub mod mempool_collector;
 /// This collector listens to a stream of new Opensea orders.
 pub mod opensea_order_collector;
 
+//This collector listens to a stream of from MEV-Share SSE endpoint 
+//(backrunnable events which apply to this project )
 pub mod mevshare_collector;
+
+//This collect is Same mempool_collectors but use a Generic method for all kind of node
+pub mod generic_mempool_collector;
