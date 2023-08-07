@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::ops::Add;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
+
 
 use async_trait::async_trait;
 
@@ -14,6 +16,10 @@ use matchmaker::types::{BundleRequest, BundleTx};
 use ethers::providers::Middleware;
 use ethers::types::{Address, H256};
 use ethers::types::{H160, U256};
+use ethers::{
+    abi::{Token, encode},
+    prelude::abigen,
+    types::Bytes};
 use tracing::info;
 
 
@@ -22,6 +28,11 @@ use crate::types::V2V3PoolRecord;
 use super::types::{Action, Event};
 
 use mev_share_bindings::blind_arb::BlindArb;
+
+abigen!(
+    Balancer_Flashloan,
+    "bindings/src/blind_arb.json";
+);
 
 /// Information about a uniswap v2 pool.
 #[derive(Debug, Clone)]
@@ -41,7 +52,7 @@ pub struct MevShareUniArb<M, S> {
     /// Signer for transactions.
     tx_signer: S,
     /// Arb contract.
-    arb_contract: BlindArb<M>,
+    arb_contract: Balancer_Flashloan<M>,
 }
 
 impl<M: Middleware + 'static, S: Signer> MevShareUniArb<M, S> {
@@ -51,7 +62,7 @@ impl<M: Middleware + 'static, S: Signer> MevShareUniArb<M, S> {
             client: client.clone(),
             pool_map: HashMap::new(),
             tx_signer: signer,
-            arb_contract: BlindArb::new(arb_contract_address, client),
+            arb_contract: Balancer_Flashloan::new(arb_contract_address, client),
         }
     }
 }
@@ -135,30 +146,52 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
         ];
 
         // Set parameters for the backruns.
-        let payment_percentage = U256::from(0);
+        let payment_percentage = U256::from(40);
         let bid_gas_price = self.client.get_gas_price().await.unwrap();
         let block_num = self.client.get_block_number().await.unwrap();
-
+    
         for size in sizes {
             let arb_tx = {
                 // Construct arb tx based on whether the v2 pool has weth as token0.
                 let mut inner = match v2_info.is_weth_token0 {
                     true => {
-                        self.arb_contract
-                            .execute_arbitrage(
-                                v2_info.v2_pool,
-                                v3_address,
-                                payment_percentage,
-                            )
+
+                        let userdata_token = Token::Tuple(vec![
+                            Token::Bool(true),
+                            Token::Address(v2_info.v2_pool),
+                            Token::Address(v3_address),
+                            Token::Uint(size),
+                            Token::Uint(payment_percentage), 
+                        ]);
+
+                        let user_data = Bytes::from(encode(&[userdata_token]));
+                        let amounts = vec![size];
+                        let tokens = vec![Address::from_str("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").unwrap()];
+                          self.arb_contract.make_flash_loan(
+                            tokens, 
+                            amounts, 
+                            user_data,
+                            )                      
                             .tx
                     }
                     false => {
-                        self.arb_contract
-                            .execute_arbitrage(
-                                v2_info.v2_pool,
-                                v3_address,
-                                payment_percentage,
-                            )
+                        
+                        let userdata_token = Token::Tuple(vec![
+                            Token::Bool(false),
+                            Token::Address(v2_info.v2_pool),
+                            Token::Address(v3_address),
+                            Token::Uint(size),
+                            Token::Uint(payment_percentage), 
+                        ]);
+
+                        let user_data = Bytes::from(encode(&[userdata_token]));
+                        let amounts = vec![size];
+                        let tokens = vec![Address::from_str("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").unwrap()];
+                          self.arb_contract.make_flash_loan(
+                            tokens, 
+                            amounts, 
+                            user_data,
+                            )                      
                             .tx
                     }
                 };
