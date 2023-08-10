@@ -52,7 +52,7 @@ pub struct MevShareUniArb<M, S> {
     /// Signer for transactions.
     tx_signer: S,
     /// Arb contract.
-    arb_contract: Balancer_Flashloan<M>,
+    arb_contract: BlindArb<M>,
 }
 
 impl<M: Middleware + 'static, S: Signer> MevShareUniArb<M, S> {
@@ -62,7 +62,7 @@ impl<M: Middleware + 'static, S: Signer> MevShareUniArb<M, S> {
             client: client.clone(),
             pool_map: HashMap::new(),
             tx_signer: signer,
-            arb_contract: Balancer_Flashloan::new(arb_contract_address, client),
+            arb_contract: BlindArb::new(arb_contract_address, client),
         }
     }
 }
@@ -151,47 +151,27 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
         let block_num = self.client.get_block_number().await.unwrap();
     
         for size in sizes {
-            let arb_tx = {
+           let arb_tx = {
                 // Construct arb tx based on whether the v2 pool has weth as token0.
                 let mut inner = match v2_info.is_weth_token0 {
                     true => {
-
-                        let userdata_token = Token::Tuple(vec![
-                            Token::Bool(true),
-                            Token::Address(v2_info.v2_pool),
-                            Token::Address(v3_address),
-                            Token::Uint(size),
-                            Token::Uint(payment_percentage), 
-                        ]);
-
-                        let user_data = Bytes::from(encode(&[userdata_token]));
-                        let amounts = vec![size];
-                        let tokens = vec![Address::from_str("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").unwrap()];
-                          self.arb_contract.make_flash_loan(
-                            tokens, 
-                            amounts, 
-                            user_data,
-                            )                      
+                        self.arb_contract
+                            .execute_arb_weth_token_0(
+                                v2_info.v2_pool,
+                                v3_address,
+                                size,
+                                payment_percentage,
+                            )
                             .tx
                     }
                     false => {
-                        
-                        let userdata_token = Token::Tuple(vec![
-                            Token::Bool(false),
-                            Token::Address(v2_info.v2_pool),
-                            Token::Address(v3_address),
-                            Token::Uint(size),
-                            Token::Uint(payment_percentage), 
-                        ]);
-
-                        let user_data = Bytes::from(encode(&[userdata_token]));
-                        let amounts = vec![size];
-                        let tokens = vec![Address::from_str("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").unwrap()];
-                          self.arb_contract.make_flash_loan(
-                            tokens, 
-                            amounts, 
-                            user_data,
-                            )                      
+                        self.arb_contract
+                            .execute_arb_weth_token_1(
+                                v2_info.v2_pool,
+                                v3_address,
+                                size,
+                                payment_percentage,
+                            )
                             .tx
                     }
                 };
@@ -210,6 +190,7 @@ impl<M: Middleware + 'static, S: Signer + 'static> MevShareUniArb<M, S> {
 
                 inner
             };
+            
             info!("generated arb tx: {:?}", arb_tx);
 
             // Sign tx and construct bundle
