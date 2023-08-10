@@ -288,7 +288,7 @@ impl BundleRequest {
                 refund_config: Some({ vec![RefundConfig{
                     
                     address: Address::from_str("0x40").unwrap(),
-                    percent:90,
+                    percent:30,
 
                    }]
             
